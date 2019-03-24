@@ -1,0 +1,178 @@
+1、频域低通滤波器：设计低通滤波器包括 butterworth and Gaussian (选择合适的半径，计算功率谱比),平滑测试图像test1和2;分析各自优缺点；
+
+close all;clear all;clc;
+[filename, pathname] = uigetfile({'*.jpg'; '*.bmp'; '*.gif';'*.pgm';'*.tif'}, '选择图片');
+I=imread([pathname, filename]);
+I=im2double(I);
+M=2*size(I,1);  %滤波器行数
+N=2*size(I,2);  %滤波器列数
+u=-M/2:(M/2-1);
+v=-N/2:(N/2-1);
+[U,V]=meshgrid(u,v);
+D=sqrt(U.^2+V.^2);
+D0=50;
+n=4;
+H1=1./(1+(D./D0).^(2*n));  %构造巴特沃斯滤波器
+H2=exp(-D.^2/2./D0^2);     %构造高斯滤波器
+J1=fftshift(fft2(I,size(H1,1),size(H1,2)));  %转换到频域
+J2=fftshift(fft2(I,size(H2,1),size(H2,2)));  %转换到频域
+K1=J1.*H1;
+K2=J2.*H2;
+L1=ifft2(ifftshift(K1));  %傅立叶反变换
+L1=L1(1:size(I,1),1:size(I,2));  %改变图像大小
+L2=ifft2(ifftshift(K2));  %傅立叶反变换
+L2=L2(1:size(I,1),1:size(I,2));  %改变图像大小
+s=0;
+s1=0;
+for x1=1:size(J1,1)
+for y1=1:size(J1,2)
+    m1=(abs(K1(x1,y1)))^2;
+    s1=s1+m1;   
+    m2=(abs(J1(x1,y1)))^2;
+    s=s+m2;
+end
+end
+a1=s1/s;
+disp(a1);
+s3=0;
+s4=0;
+for x2=1:size(J2,1)
+for y2=1:size(J2,2)
+    m3=(abs(K2(x2,y2)))^2;
+    s4=s4+m3;   
+    m4=(abs(J2(x2,y2)))^2;
+    s3=s3+m4;
+end
+end
+a2=s4/s3;
+ %计算功率谱比
+disp(a2);
+figure(1);
+subplot(221),imshow(I),title('原始图像');  %显示原始图像
+subplot(222);imshow(L1),title(['经过butterworth低通滤波器后的图像,D0=' num2str(D0)]);  %显示滤波后的图像
+subplot(223);imshow(abs(255.*J1./max(max(J1)))),title('原始图像的频谱图');
+subplot(224);imshow(abs(255.*K1./max(max(K1)))),title(['经过butterworth低通滤波器后的频谱图,D0=' num2str(D0)]);
+figure(2);
+subplot(221),imshow(I),title('原始图像');  %显示原始图像
+subplot(222);imshow(L2),title(['经过Gaussian低通滤波器后的频谱图,D0=' num2str(D0)]);  %显示滤波后的图像
+subplot(223);imshow(abs(255.*J2./max(max(J2)))),title('原始图像的频谱图');
+subplot(224);imshow(abs(255.*K2./max(max(K2)))),title(['经过Gaussian低通滤波器后的频谱图,D0=' num2str(D0)]);
+
+2、
+close all;clear all;clc;
+[filename, pathname] = uigetfile({'*.jpg'; '*.bmp'; '*.gif';'*.pgm';'*.tif'}, '选择图片');
+I=imread([pathname, filename]);
+I=im2double(I);
+M=2*size(I,1);  %滤波器行数
+N=2*size(I,2);  %滤波器列数
+u=-M/2:(M/2-1);
+v=-N/2:(N/2-1);
+[U,V]=meshgrid(u,v);
+D=sqrt(U.^2+V.^2);
+D0=100;
+n=4;
+H1=1./(1+(D0./D).^(2*n));  %构造巴特沃斯高通滤波器
+H2=1-exp(-D.^2/2./D0^2);     %构造高斯高通滤波器
+J1=fftshift(fft2(I,size(H1,1),size(H1,2)));  %转换到频域
+J2=fftshift(fft2(I,size(H2,1),size(H2,2)));  %转换到频域
+K1=J1.*H1;
+K2=J2.*H2;
+L1=ifft2(ifftshift(K1));  %傅立叶反变换
+L1=L1(1:size(I,1),1:size(I,2));  %改变图像大小
+L2=ifft2(ifftshift(K2));  %傅立叶反变换
+L2=L2(1:size(I,1),1:size(I,2));  %改变图像大小
+s=0;
+s1=0;
+for x1=1:size(J1,1)
+for y1=1:size(J1,2)
+    m1=(abs(K1(x1,y1)))^2;
+    s1=s1+m1;   
+    m2=(abs(J1(x1,y1)))^2;
+    s=s+m2;
+end
+end
+a1=s1/s;
+disp(a1);
+s3=0;
+s4=0;
+for x2=1:size(J2,1)
+for y2=1:size(J2,2)
+    m3=(abs(K2(x2,y2)))^2;
+    s4=s4+m3;   
+    m4=(abs(J2(x2,y2)))^2;
+    s3=s3+m4;
+end
+end
+a2=s4/s3;
+ %计算功率谱比
+disp(a2);
+figure(1);
+subplot(221),imshow(I),title('原始图像');  %显示原始图像
+subplot(222);imshow(L1),title(['经过butterworth高通滤波器后的图像,D0=' num2str(D0)]);  %显示滤波后的图像
+subplot(223);imshow(abs(255.*J1./max(max(J1)))),title('原始图像的频谱图');
+subplot(224);imshow(abs(255.*K1./max(max(K1)))),title(['经过butterworth高通滤波器后的频谱图,D0=' num2str(D0)]);
+figure(2);
+subplot(221),imshow(I),title('原始图像');  %显示原始图像
+subplot(222);imshow(L2),title(['经过Gaussian高通滤波器后的频谱图,D0=' num2str(D0)]);  %显示滤波后的图像
+subplot(223);imshow(abs(255.*J2./max(max(J2)))),title('原始图像的频谱图');
+subplot(224);imshow(abs(255.*K2./max(max(K2)))),title(['经过Gaussian低通滤波器后的频谱图,D0=' num2str(D0)]);
+
+3、
+close all;clear all;clc;
+[filename, pathname] = uigetfile({'*.jpg'; '*.bmp'; '*.gif';'*.pgm';'*.tif'}, '选择图片');
+I=imread([pathname, filename]);
+I=im2double(I);
+M=2*size(I,1);  %滤波器行数
+N=2*size(I,2);  %滤波器列数
+u=-M/2:(M/2-1);
+v=-N/2:(N/2-1);
+[U,V]=meshgrid(u,v);
+D=sqrt(U.^2+V.^2);
+c=1;
+D0=100;
+k1=1;k2=1;
+H1=1+c*4*pi^2.*D.^2;  %构造拉普拉斯高通滤波器
+H2=1-exp(-D.^2/2./D0^2);     %构造Unmask高通滤波器
+J1=fftshift(fft2(I,size(H1,1),size(H1,2)));  %转换到频域
+J2=fftshift(fft2(I,size(H2,1),size(H2,2)));  %转换到频域
+K1=J1.*H1;
+K2=k1+k2.*J2.*H2;
+L1=ifft2(ifftshift(K1));  %傅立叶反变换
+L1=L1(1:size(I,1),1:size(I,2));  %改变图像大小
+L2=ifft2(ifftshift(K2));  %傅立叶反变换
+L2=L2(1:size(I,1),1:size(I,2));  %改变图像大小
+s=0;
+s1=0;
+for x1=1:size(J1,1)
+for y1=1:size(J1,2)
+    m1=(abs(K1(x1,y1)))^2;
+    s1=s1+m1;   
+    m2=(abs(J1(x1,y1)))^2;
+    s=s+m2;
+end
+end
+a1=s1/s;
+disp(a1);
+s3=0;
+s4=0;
+for x2=1:size(J2,1)
+for y2=1:size(J2,2)
+    m3=(abs(K2(x2,y2)))^2;
+    s4=s4+m3;   
+    m4=(abs(J2(x2,y2)))^2;
+    s3=s3+m4;
+end
+end
+a2=s4/s3;
+ %计算功率谱比
+disp(a2);
+figure(1);
+subplot(221),imshow(I),title('原始图像');  %显示原始图像
+subplot(222);imshow(L1),title('经过拉普拉斯高通滤波器后的图像');  %显示滤波后的图像
+subplot(223);imshow(abs(255.*J1./max(max(J1)))),title('原始图像的频谱图');
+subplot(224);imshow(abs(255.*K1./max(max(K1)))),title('经过拉普拉斯高通滤波器后的频谱图');
+figure(2);
+subplot(221),imshow(I),title('原始图像');  %显示原始图像
+subplot(222);imshow(L2),title(['经过unmask高通滤波器后的频谱图,D0=' num2str(D0)]);  %显示滤波后的图像
+subplot(223);imshow(abs(255.*J2./max(max(J2)))),title('原始图像的频谱图');
+subplot(224);imshow(abs(255.*K2./max(max(K2)))),title(['经unmask7低通滤波器后的频谱图,D0=' num2str(D0)]);
