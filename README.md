@@ -315,7 +315,86 @@ subplot(224);imshow(abs(255.*K2./max(max(K2)))),title(['经过Gaussian低通滤�
 
 **结果分析**
 
-①对比每组图像处理结果中的原始图像和滤波后的图像，可以看到滤波器边缘增强的效果
+①对比每组图像处理结果中的原始图像和滤波后的图像，可以看到滤波器边缘增强的效果；
+
+②对于拉普拉斯算子和unmask滤波，两者达到的滤波效果基本上是一致的。
+
+
+**代码整理**
+
+```swift
+
+close all;clear all;clc;
+[filename, pathname] = uigetfile({'*.jpg'; '*.bmp'; '*.gif';'*.pgm';'*.tif'}, '选择图片');
+I=imread([pathname, filename]);
+I=im2double(I);
+M=2*size(I,1);  %滤波器行数
+N=2*size(I,2);  %滤波器列数
+u=-M/2:(M/2-1);
+v=-N/2:(N/2-1);
+[U,V]=meshgrid(u,v);
+D=sqrt(U.^2+V.^2);
+c=1;
+D0=100;
+k1=1;k2=1;
+H1=1+c*4*pi^2.*D.^2;  %构造拉普拉斯高通滤波器
+H2=1-exp(-D.^2/2./D0^2);     %构造Unmask高通滤波器
+J1=fftshift(fft2(I,size(H1,1),size(H1,2)));  %转换到频域
+J2=fftshift(fft2(I,size(H2,1),size(H2,2)));  %转换到频域
+K1=J1.*H1;
+K2=k1+k2.*J2.*H2;
+L1=ifft2(ifftshift(K1));  %傅立叶反变换
+L1=L1(1:size(I,1),1:size(I,2));  %改变图像大小
+L2=ifft2(ifftshift(K2));  %傅立叶反变换
+L2=L2(1:size(I,1),1:size(I,2));  %改变图像大小
+s=0;
+s1=0;
+for x1=1:size(J1,1)
+for y1=1:size(J1,2)
+    m1=(abs(K1(x1,y1)))^2;
+    s1=s1+m1;   
+    m2=(abs(J1(x1,y1)))^2;
+    s=s+m2;
+end
+end
+a1=s1/s;
+disp(a1);
+s3=0;
+s4=0;
+for x2=1:size(J2,1)
+for y2=1:size(J2,2)
+    m3=(abs(K2(x2,y2)))^2;
+    s4=s4+m3;   
+    m4=(abs(J2(x2,y2)))^2;
+    s3=s3+m4;
+end
+end
+a2=s4/s3;
+ %计算功率谱比
+disp(a2);
+figure(1);
+subplot(221),imshow(I),title('原始图像');  %显示原始图像
+subplot(222);imshow(L1),title('经过拉普拉斯高通滤波器后的图像');  %显示滤波后的图像
+subplot(223);imshow(abs(255.*J1./max(max(J1)))),title('原始图像的频谱图');
+subplot(224);imshow(abs(255.*K1./max(max(K1)))),title('经过拉普拉斯高通滤波器后的频谱图');
+figure(2);
+subplot(221),imshow(I),title('原始图像');  %显示原始图像
+subplot(222);imshow(L2),title(['经过unmask高通滤波器后的频谱图,D0=' num2str(D0)]);  %显示滤波后的图像
+subplot(223);imshow(abs(255.*J2./max(max(J2)))),title('原始图像的频谱图');
+subplot(224);imshow(abs(255.*K2./max(max(K2)))),title(['经unmask7低通滤波器后的频谱图,D0=' num2str(D0)]);
+
+```
+
+### 4、比较并讨论空域低通高通滤波（Project3）与频域低通和高通的关系；
+
+* 空域滤波和频域滤波间的纽带是卷积定理，空域滤波和频域滤波的滤波器互为傅里叶变换。
+
+* 使用空间域滤波和频率域滤波对存在图像噪声有一定的减弱作用和对边缘的检测效果。
+
+* 从空域和频域低通滤波器对图片的滤波效果看，空域滤波中，平滑滤波器算法简单，处理速度快，但在降低噪声的同时使图像模糊，特别是在边缘和细节处。而中值滤波对椒盐噪声的抑制效果比较好，但对点、线等细节较多的图像却不太合适。空域低通滤波对椒盐噪声过滤效果差，图像较为模糊。而在频域滤波中，去噪声的同时将会导致边缘信息损失而使图像模糊，并且产生振铃效应，而且计算量大，计算时间长。
+
+* 从空域和频域高通滤波器对图片的滤波效果看，空域滤波中，算法比较简单，处理速度较快。在锐化方面效果明显，线条突出；频域滤波中，算法复杂，计算速度慢，有微量振铃效果，图像结果显示比较平缓。
+
 
 
 
